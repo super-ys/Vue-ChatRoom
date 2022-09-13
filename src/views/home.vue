@@ -29,7 +29,24 @@
 
 
     <ChatRoom>
+        <template #title>
+            <span>{{name}}</span>
+        </template>
 
+        <template #room>
+
+        </template>
+
+        <template #send>
+            <el-input
+                v-model="message"
+                :rows="5"
+                type="textarea"
+                placeholder="请输入信息..."
+            />
+            <div style="margin: 8px 0" ></div>
+            <el-button type="primary">发送</el-button>
+        </template>
     </ChatRoom>
 </el-container>
 
@@ -59,6 +76,12 @@
 
     // TODO 数据
     const data = reactive({list: []})
+
+    // TODO 名字
+    const name = ref("")
+
+    // TODO 消息
+    const message = ref("")
 
 
     function getColor(index){
@@ -130,5 +153,9 @@
     display: block;
     margin: 30px auto;
     cursor: pointer;
+  }
+  .el-button{
+    position: relative;
+    left: 210px;
   }
 </style>
