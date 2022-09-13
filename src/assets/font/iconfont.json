@@ -1,0 +1,128 @@
+{
+  "id": "2417106",
+  "name": "icon",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "139829",
+      "name": "群组多人",
+      "font_class": "qunzuduoren",
+      "unicode": "e6d6",
+      "unicode_decimal": 59094
+    },
+    {
+      "icon_id": "1029916",
+      "name": "logout",
+      "font_class": "logout",
+      "unicode": "e742",
+      "unicode_decimal": 59202
+    },
+    {
+      "icon_id": "736510",
+      "name": "微信",
+      "font_class": "weixin",
+      "unicode": "e619",
+      "unicode_decimal": 58905
+    },
+    {
+      "icon_id": "355522",
+      "name": "share",
+      "font_class": "share",
+      "unicode": "e63d",
+      "unicode_decimal": 58941
+    },
+    {
+      "icon_id": "1271582",
+      "name": "About software",
+      "font_class": "19guanyuruanjian",
+      "unicode": "e616",
+      "unicode_decimal": 58902
+    },
+    {
+      "icon_id": "3216142",
+      "name": "消息",
+      "font_class": "icon--",
+      "unicode": "e743",
+      "unicode_decimal": 59203
+    },
+    {
+      "icon_id": "4941941",
+      "name": "纸业",
+      "font_class": "paper-industry",
+      "unicode": "e650",
+      "unicode_decimal": 58960
+    },
+    {
+      "icon_id": "6335479",
+      "name": "提醒",
+      "font_class": "tixing1",
+      "unicode": "e66f",
+      "unicode_decimal": 58991
+    },
+    {
+      "icon_id": "9666577",
+      "name": "消息",
+      "font_class": "xiaoxi",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "16583349",
+      "name": "进入",
+      "font_class": "custom308",
+      "unicode": "e70a",
+      "unicode_decimal": 59146
+    },
+    {
+      "icon_id": "17857814",
+      "name": "人",
+      "font_class": "ren-01",
+      "unicode": "e60e",
+      "unicode_decimal": 58894
+    },
+    {
+      "icon_id": "19478885",
+      "name": "设 置 (1)",
+      "font_class": "shezhi1",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "19689894",
+      "name": "消 息",
+      "font_class": "xiaoxi_huaban1",
+      "unicode": "e614",
+      "unicode_decimal": 58900
+    },
+    {
+      "icon_id": "12016902",
+      "name": "收藏",
+      "font_class": "xuanzhong",
+      "unicode": "e612",
+      "unicode_decimal": 58898
+    },
+    {
+      "icon_id": "12354907",
+      "name": "提醒",
+      "font_class": "tixing",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    },
+    {
+      "icon_id": "8777371",
+      "name": "international",
+      "font_class": "icon-test",
+      "unicode": "e64f",
+      "unicode_decimal": 58959
+    },
+    {
+      "icon_id": "12515451",
+      "name": "列表",
+      "font_class": "liebiao",
+      "unicode": "e60a",
+      "unicode_decimal": 58890
+    }
+  ]
+}
