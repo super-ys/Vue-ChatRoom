@@ -1,12 +1,13 @@
 <template>
     <el-aside width="60px">
         <div class="block">
-            <el-avatar shape="square" :size="50" :src="src"></el-avatar>
+            <el-avatar shape="square" :size="50" :src="url"></el-avatar>
+            <p>{{url}}</p>
         </div>
 
         <div>
             
-            <slot></slot>
+            <slot name="options"></slot>
             
         </div>
         
@@ -18,11 +19,13 @@
 </template>
 
 <script steup>
-    import { ref } from 'vue';
-    // TODO 头像逻辑
-    const src = ref("")
 
-    
+  import { reactive, ref} from 'vue';
+  
+  const imgUrl = reactive({url:'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'})
+  const url = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+  
+   
 </script>
 
 <style scoped>

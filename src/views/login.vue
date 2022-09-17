@@ -36,8 +36,11 @@
 
     import {User, Lock} from '@element-plus/icons-vue'
     import {ElMessage} from 'element-plus'
-    import {ref, watch} from 'vue'
+    import {ref, watch, inject} from 'vue'
     import {useRoute, useRouter} from 'vue-router'
+
+    // 注入数据
+    const store = inject('store')
 
     // 全局路由
     const router = useRouter()  
@@ -59,16 +62,18 @@
         }
     }
 
-    
+    const user = store.state.user
+    console.log('user => ', user)
+    // 验证登录
     function checkAccount(){
-        if(account.value!= 'admin' || password.value != '123456'){
+        if(account.value!= user.user_id || password.value != user.password){
             ElMessage.error('账户名或密码有误，请重新输入')
         }else{
             ElMessage({
                 message: 'Congrats, this is a success message.',
                 type: 'success',
             })
-            localStorage.setItem('username', account.value)
+            localStorage.setItem('user', JSON.stringify(user))
             router.push({path: "/", replace: true})
         }
     }
@@ -90,5 +95,8 @@
     .el-button{
         height: 38px;
         width: 230px;
+    }
+    .el-input{
+        height: 40px
     }
 </style>

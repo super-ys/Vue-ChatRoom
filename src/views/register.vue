@@ -45,7 +45,7 @@
                 if(!value){
                     return callback(new Error('账号不能为空'));
                 }
-                else if(value.length < 6){
+                else if(value.length < 5){
                     return callback(new Error('账号长度不得小于六位'));
                 }
                 else if(!/^\w+$/.test(value)){
@@ -135,5 +135,8 @@
     .el-button{
         height: 38px;
         width: 300px;
+    }
+    .el-input{
+        height: 40px
     }
 </style>

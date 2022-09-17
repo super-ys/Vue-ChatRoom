@@ -1,7 +1,7 @@
 import Home from '../views/home.vue'
 import Login from '../views/login.vue'
 import Register from '../views/register.vue'
-import {createRouter, createWebHashHistory} from 'vue-router'
+import {createRouter, createWebHashHistory, createWebHistory} from 'vue-router'
 
 const routes = [
     {
@@ -15,7 +15,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes,
 })
 

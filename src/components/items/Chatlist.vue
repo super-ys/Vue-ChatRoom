@@ -9,10 +9,11 @@
     </el-container>
 </template>
 
-<script>
-  export default{
+<script setup>
+  import {inject} from 'vue'
+  const store = inject('store')
+  console.log(store) 
 
-  }
 </script>
 
 <style scoped>
@@ -26,5 +27,8 @@
     width: 200px;
     box-shadow: 0 5px 12px 0 rgb(255 255 255 / 30%);
     opacity: .9;
+  }
+  .el-scrollbar{
+    padding: 0;
   }
 </style>
