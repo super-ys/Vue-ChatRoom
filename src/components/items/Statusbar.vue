@@ -24,15 +24,25 @@
     import { ElMessage } from 'element-plus';
     const route = useRoute()
     const router = useRouter()
-
+    console.log('初始化')
     
     const url = ref('')
 
     onMounted(
         () =>{
+            console.log('statusbar onMounted')
             let user = JSON.parse(localStorage.getItem('user'))
-            console.log(user)
-            url.value = user.avatar
+            if(user == null ){
+                console.log("跳转到login页面")
+                router.push({path:'/login', replace:true})
+                return;
+                
+                
+            }else{
+                console.log(user)
+                url.value = user.avatar
+            }
+            
 
         }
     )
@@ -46,7 +56,7 @@
                 type: 'success',
             })
             router.push({path:'/login', replace:true})
-        }, 3000)
+        }, 1000)
         
     }
 </script>

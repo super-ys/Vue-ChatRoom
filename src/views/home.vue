@@ -17,7 +17,14 @@
                 <el-input v-model="search" style="height:30px" @input="getSearch" placeholder="搜索聊天" :suffix-icon="Search" ></el-input>
                 </el-col>
                 <el-col :span="2">
-                    <el-icon id="plus" color="#fff" size="20px"><Plus/></el-icon>
+                    <el-icon id="plus" ref="plusRef" color="#fff" v-click-outside="onClickOutside" size="20px"><Plus/></el-icon>
+                    <el-popover ref="popoverRef" :virtual-ref="plusRef" trigger="click" virtual-triggering>
+                        <ul class="menu">
+                            <li><router-link to="/add/friend">添加好友</router-link></li>
+                            <li><router-link to="/add/group">添加群</router-link></li>
+                            <li><router-link to="/add/create">创建群聊</router-link></li>
+                        </ul>
+                    </el-popover>
                 </el-col>
             </el-row>  
         </template>
@@ -44,9 +51,12 @@
         </template>
 
         <template #room>
-            <el-scrollbar   ref="myscroll" style="height=360px">
-                <Messagebox v-for="(item, index) in history_msg.list" :data="item" :index="index" />
-            </el-scrollbar>
+            <div>
+                <el-scrollbar height="360px">
+                    <Messagebox v-for="(item, index) in history_msg.list" :data="item" :index="index" />
+                </el-scrollbar>
+            </div>
+           
             
         </template>
 
@@ -71,21 +81,28 @@
     import Chatlist from '../components/items/Chatlist.vue';
     import ChatRoom from '../components/items/Chatroom.vue';
     import {Search} from '@element-plus/icons-vue';
-    import { reactive, ref } from 'vue';
-    import { onMounted, inject, nextTick } from 'vue';
+    import { reactive, ref, unref } from 'vue';
+    import { onMounted, inject, nextTick, onUnmounted } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
+    import { ClickOutside as vClickOutside } from 'element-plus'
+    import axios from 'axios';
+    const plusRef = ref()
+    const popoverRef = ref()
+    const onClickOutside = () => {
+        unref(popoverRef).popperRef?.delayHide?.()
+    }
 
     const route = useRoute()
     const router = useRouter()
 
     const store = inject('store')
-    
-
+    var user = null
     // 侧边栏点击逻辑
     const index = ref(1)
     // TODO 数据
     const data = reactive({list: []})
 
+    // 控制侧边栏的 按钮
     function getColor(index){
         switch(index){
             case 1: 
@@ -94,52 +111,151 @@
             case 2: data.list = store.state.friends; break;
             case 3: data.list = store.state.groups; break;
         }
-        console.log('data.list => ', data.list)
+        console.log('好友/群聊列表 => ', data.list)
         this.index = index;
         this.check = true;
     }
 
-    // TODO 名字
+    // 点击一个列表（好友，或群聊），打开相应的聊天界面
     const name = ref("")
     const check = ref(true)
     const history_msg = reactive({list:[]})
+    
     function goChat(item){
+
+        to.value = item.id       
         check.value = false
         if(item.count){
             name.value = item.name + '(' + item.count + ')'
+            isgroup.value = true
+
+            // 获取群聊历史信息
+            axios.get('http://localhost:8080/message/group/'+ item.id + '/' + user.userid)
+            .then(function(res){
+                if(res.data.code == '200'){
+                    history_msg.list = res.data.data
+                }else{
+                    history_msg.list = []
+                }
+            })
+            .catch(function(err){
+                console.log(err)
+            })
         }else{
+            isgroup.value = false
             name.value = item.name
+
+            // 获取好友历史消息
+            axios.get('http://localhost:8080/message/friend/'+ user.userid +'/'+ item.id)
+            .then(function(res){
+                if(res.data.code == '200'){
+                    history_msg.list = res.data.data
+                }else{
+                    history_msg.list = []
+                }
+            })
+            .catch(function(err){
+                console.log(err)
+            })
+
         }
-        if(item.id == '11111'){
-            history_msg.list = store.state.history_message
-        }else{s
-            history_msg.list = []
-        }
-        console.log(item)
+        
+        
     }
+
+
 
     // TODO 消息
+    const to = ref("")
+    const isgroup = ref(false)
     const message = ref("")
-    const myscroll = ref(null)
-    const counter = ref(0)
-   function send(){
-    let user = JSON.parse(localStorage.getItem('user'))
-    let msg = {
-        user_id: user.user_id,
-        name: user.username,
-        avatar: user.avatar,
-        content: message.value,
-        isMe: true,
-        time: ''
+    var socket = null;
+    
+
+    function checkSocket(){
+        if(typeof(WebSocket) == 'undefined'){
+        console.log('您的浏览器不支持 web Socket')
+
+        }else{
+            console.log('您的浏览器支持 web Socket')
+            if(socket != null){
+                socket.close();
+                socket = null;
+            }
+        }
     }
-    history_msg.list.push(msg)
-    console.log(myscroll)
-    nextTick(() => {
-        myscroll.value.setScrollTop(history_msg.list.length * 50 +360)
 
-        console.log('sdddd')
+    function connection(url){
+        checkSocket();
+        socket = new WebSocket(url);
+        socket.onopen = () =>{console.log('WebSocket 已连接')}
+        socket.onmessage = (msg) =>{
+           
+            // analysisMessage(msg.data)
+            // 好友消息
+            if(!msg.data.users){
+                console.log('发来的消息：', msg.data)
+                showMsg(msg.data)
+            }else{  // 在线列表
+                console.log(msg.data)
+            }
+        }
+    }
 
-    })
+    function showMsg(msg){
+        if(msg.from == undefined)
+            msg = JSON.parse(msg)
+        let s = {
+            user_id: msg.from,
+            name: msg.name,
+            avatar: msg.from_avatar,
+            content: msg.content,
+            isMe: msg.from == user.userid,
+            time: msg.time
+        }
+        
+        history_msg.list.push(s)
+    }
+
+    function close(){
+        if(socket != null){
+            socket.close();
+            socket = null;
+            console.log("链接已关闭")
+        }else {
+            console.log("未开启链接")
+        }
+    }
+
+    function sendMessage(msg){
+        if(socket == null){
+            console.log("WebSocket 链接未开启")
+            return;
+        }
+        socket.send(JSON.stringify(msg));
+    }
+
+    function send(){
+        
+        let sendMsg = {
+            from: user.userid,
+            to: to.value,
+            name: user.username,
+            from_avatar: user.avatar,
+            content: message.value,
+            type: 'text',
+            isGroup: isgroup.value,
+            create_time: new Date().getTime()
+        }
+        message.value = "";
+        sendMessage(sendMsg)
+        showMsg(sendMsg)
+        // console.log(myscroll)
+
+        // nextTick(() => {
+        //     myscroll.value.setScrollTop(history_msg.list.length * 50 +360)
+
+        // })
 
    }
 
@@ -152,32 +268,104 @@
         
     }
 
-     // TODO 判断是否登录
+    // 获取好右列表
+     function getFriends(){
+        return axios.get('http://localhost:8080/relation/friends/'+ user.userid)
+     }
+    // 获取群聊列表
+    function getGroups(){
+        return axios.get('http://localhost:8080/relation/group/'+ user.userid)
+    }
      
-    
+    // 获取初始数据，好友列表，群聊列表
     onMounted(
        () =>{
-            let user = localStorage.getItem('user')
-            if(name == null){
-                router.push({path:'/login'})
-            }else{
-                data.list = store.state.friends.concat(store.state.groups);
+
+            user = JSON.parse(localStorage.getItem('user'))
+            if(user == null){
+               
+                router.push({path:'/login', replace:true})
                 return;
+                
+            }else{
+                connection('ws://localhost:8080/chatserver/'+ user.userid)
             }
+           
+
+            
+
+            const friends = reactive({res:''})
+            const groups = reactive({res: ''})
+            Promise.all([getFriends(), getGroups()])
+            .then(function(results){
+                friends.res = results[0].data;
+                groups.res = results[1].data;
+                console.log('friends.res==>', friends.res)
+                console.log('groups.res==>', groups.res)
+
+                let newFriends = reactive({list: []});
+                let newGroups = reactive({list: []});
+
+
+                if(friends.res.code == '200' && groups.res.code == '200'){
+                    console.log('成功进入')
+                    friends.res.data.map(item => {
+                        let obj = {
+                            id : item.userid,
+                            name: item.username,
+                            avatar: item.avatar
+                        }
+                        newFriends.list.push(obj)
+                    })
+                    groups.res.data.map(item => {
+                        let obj = {
+                            id: item.group_id,
+                            name: item.group_name,
+                            avatar: item.group_head,
+                            count: item.group_count
+                        }
+                        newGroups.list.push(obj)
+                    })
+                }else{
+                    console.log('进入失败')
+                }
+                store.state.friends = newFriends.list
+                store.state.groups = newGroups.list
+                data.list = newFriends.list.concat(newGroups.list);
+
+            })
+            .catch(function(err){
+                console.log(err)
+            })
+            
        }
     )
 
-
-    
+    onUnmounted(
+        () => {
+            close()
+        }
+    )
 
 </script>
 
 <style scoped>
 
+    .menu li{
+        cursor: pointer;
+        text-align: center;
+        width: 120px;
+        height: 50px;
+        line-height: 50px;
+        border: 1px solid #ccc;
+        position: relative;
+        left: -40px;
+        list-style-type: none;
+    }
     li{
         cursor: pointer;
         text-align: center;
-        width: 198px;
+        width: 220px;
         height: 50px;
         line-height: 50px;
         border: 1px solid #ccc;

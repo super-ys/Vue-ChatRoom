@@ -14,35 +14,33 @@
 </template>
 
 
-<script >
-    export default{
-        props: {
-            check: Boolean
-        },
-        methods:{
+<script setup>
+    import {reactive, ref, inject, onMounted} from 'vue';
+    import {useRoute, useRouter} from 'vue-router'
+
+    const route = useRoute()
+    const router = useRouter()
+    defineProps({
+        check: Boolean
+    })
+
+    onMounted(
+        () =>{
+            console.log('chatroom onMounted')
+            let user = JSON.parse(localStorage.getItem('user'))
+            if(user == null ){
+
+                router.push({path:'login', replace:true})
+                console.log("跳转到login页面")
+                
+            }else{
+                console.log(user)
+                
+            }
             
-        },
-        update:()=>{
-            this.$nextTick(() =>{
-                this.$ref['myscroll'].setScrollTop(360)
-            })
-            console.log(this.$ref['myscroll'])
-            console.log("sddd")
-            
+
         }
-       
-    }
-
-    // const props = defineProps({
-    //     check: Boolean
-    // })
-    // const myscroll = ref(null)
-    // console.log(myscroll)
-    // nextTick(()=>{
-    //     myscroll.warp.scrollTop = 360
-    // })
-    // const check = ref(true)
-
+    )
     
 </script>
 

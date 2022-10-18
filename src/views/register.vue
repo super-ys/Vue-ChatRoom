@@ -18,11 +18,11 @@
       <el-form-item  prop="pass">
         <el-input v-model="ruleForm.pass" size="large" :prefix-icon="Lock" type="password" placeholder="请输入密码" autocomplete="off"></el-input>
       </el-form-item>
-      <el-form-item  prop="account">
+      <el-form-item  prop="checkPass">
         <el-input v-model="ruleForm.checkPass" size="large" :prefix-icon="Lock" type="password" placeholder="请再次输入密码" autocomplete="off"></el-input>
       </el-form-item>
 
-      <el-form-item>
+      <el-form-item >
       <el-button type="primary" @click="submitForm('ruleForm')"
         >Submit</el-button
       >
@@ -33,7 +33,8 @@
 
 <script>
     import {Avatar,User, Lock} from '@element-plus/icons-vue'
-
+    import {ElMessage} from 'element-plus'
+    import axios from 'axios'
     export default{
         mounted(){
             console.log(this.$route.params.d)
@@ -46,7 +47,7 @@
                     return callback(new Error('账号不能为空'));
                 }
                 else if(value.length < 5){
-                    return callback(new Error('账号长度不得小于六位'));
+                    return callback(new Error('账号长度不得小于五位'));
                 }
                 else if(!/^\w+$/.test(value)){
                     return callback(new Error('账号必须由数字和字母组成'))
@@ -110,14 +111,27 @@
         },
         methods:{
             submitForm(formName){
-                this.$refs[formName].validate((valid) => {
-                    if(valid){
-                        alert('submit!');
-                    }else{
-                        console.log('error submit!!');
-                        return false;
-                    }
-                })
+                axios.post('http://localhost:8080/user/register', {
+                            userid: this.$data.ruleForm.account,
+                            password: this.$data.ruleForm.pass,
+                            username: this.$data.ruleForm.username,
+                            sex: 1,
+                            avatar: '/default/default.jpg'
+                        })
+                        .then(function(response){
+                            if(response.data.code == '200'){
+                                ElMessage({
+                                    message: response.data.msg,
+                                    type: 'success',
+                                })
+                                // this.$refs[formName].resetFields();
+                            }else{
+                                ElMessage.error(response.data.msg)
+                            }
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
             }
         }
     }

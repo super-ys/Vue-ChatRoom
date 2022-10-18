@@ -38,7 +38,7 @@
     import {ElMessage} from 'element-plus'
     import {ref, watch, inject} from 'vue'
     import {useRoute, useRouter} from 'vue-router'
-
+    import axios from 'axios'
     // 注入数据
     const store = inject('store')
 
@@ -62,21 +62,32 @@
         }
     }
 
-    const user = store.state.user
-    console.log('user => ', user)
     // 验证登录
     function checkAccount(){
-        if(account.value!= user.user_id || password.value != user.password){
-            ElMessage.error('账户名或密码有误，请重新输入')
-        }else{
-            ElMessage({
-                message: 'Congrats, this is a success message.',
-                type: 'success',
-            })
-            localStorage.setItem('user', JSON.stringify(user))
-            router.push({path: "/", replace: true})
-        }
+       
+        axios.post("http://localhost:8080/user/login",{
+            userid: account.value,
+            password: password.value
+        })
+        .then(function(res){
+            console.log(res)
+            if(res.data.code == '200'){
+                ElMessage({
+                    message: 'Congrats, this is a success message.',
+                    type: 'success',
+                })
+                localStorage.setItem('user', JSON.stringify(res.data.data))
+                router.push({path: "/", replace: true})
+            }else{
+                ElMessage.error(res.msg)
+            }
+        })
+        .catch(function(err){
+            ElMessage.error(err)
+        })
+            
     }
+    
 
 </script>
 
