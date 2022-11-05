@@ -10,7 +10,8 @@ const store = {
         },
         friends:[],
         groups:[],
-        history_message:[]
+        history_message:[],
+        token:''
     })
 
 } 

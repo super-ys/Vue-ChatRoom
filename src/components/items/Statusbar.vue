@@ -50,6 +50,7 @@
     // 退出
     function logout(){
         localStorage.removeItem('user')
+        localStorage.removeItem('token')
         setTimeout(() =>{
             ElMessage({
                 message: '退出登录成功',

@@ -3,8 +3,8 @@
 
     <Statusbar>
         <template #options>
-            <el-icon @click="getColor(1)" :color="index==1?'#19CAAD':'#fff'" size="30px"><ChatDotRound /></el-icon>
-            <el-icon @click="getColor(2)" :color="index==2?'#19CAAD':'#fff'" size="30px"><User /></el-icon>
+            <el-icon @click="switchTab(1)" :color="index==1?'#19CAAD':'#fff'" size="30px"><ChatDotRound /></el-icon>
+            <el-icon @click="switchTab(2)" :color="index==2?'#19CAAD':'#fff'" size="30px"><User /></el-icon>
             <el-icon :color="index==3?'#19CAAD':'#fff'"  size="30px" class="iconfont icon-qunzuduoren" @click="getColor(3)"/>  
         </template>
     </Statusbar>
@@ -85,25 +85,30 @@
     import { onMounted, inject, nextTick, onUnmounted } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { ClickOutside as vClickOutside } from 'element-plus'
-    import axios from 'axios';
+    // import axios from 'axios';
+    import { connection, close, sendMessage} from '../websocket/socket.js'
+    import { getFriends, getGroups, getGroupHistory, getFriendHistory } from '../axios/api';
+    
+    const store = inject('store')
+    var user = null
+    const router = useRouter()
+    //  聊天人员列表数据
+    const data = reactive({list: []})
+    // 历史信息数据
+    const history_msg = reactive({list:[]})
+
+
+    // 弹出框
     const plusRef = ref()
     const popoverRef = ref()
     const onClickOutside = () => {
         unref(popoverRef).popperRef?.delayHide?.()
     }
 
-    const route = useRoute()
-    const router = useRouter()
-
-    const store = inject('store')
-    var user = null
-    // 侧边栏点击逻辑
+    
+    // 点击侧边栏切换数据逻辑
     const index = ref(1)
-    // TODO 数据
-    const data = reactive({list: []})
-
-    // 控制侧边栏的 按钮
-    function getColor(index){
+    function switchTab(index){
         switch(index){
             case 1: 
                 data.list = store.state.friends.concat(store.state.groups);
@@ -116,21 +121,19 @@
         this.check = true;
     }
 
-    // 点击一个列表（好友，或群聊），打开相应的聊天界面
+
+    // 点击一个列表（好友，或群聊），打开相应的聊天界面， 并获取历史消息
+    const to = ref("")
+    const isgroup = ref(false)
     const name = ref("")
     const check = ref(true)
-    const history_msg = reactive({list:[]})
-    
     function goChat(item){
-
         to.value = item.id       
         check.value = false
-        if(item.count){
+        if(item.count){ // 点击的是群聊
             name.value = item.name + '(' + item.count + ')'
             isgroup.value = true
-
-            // 获取群聊历史信息
-            axios.get('http://localhost:8080/message/group/'+ item.id + '/' + user.userid)
+            getGroupHistory(item.id, user.userid)
             .then(function(res){
                 if(res.data.code == '200'){
                     history_msg.list = res.data.data
@@ -142,13 +145,16 @@
                 console.log(err)
             })
         }else{
+            // 点击的是好友
             isgroup.value = false
             name.value = item.name
 
             // 获取好友历史消息
-            axios.get('http://localhost:8080/message/friend/'+ user.userid +'/'+ item.id)
+            getFriendHistory(user.userid, item.id)
+    
             .then(function(res){
                 if(res.data.code == '200'){
+                    console.log('histroy', res.data.data)
                     history_msg.list = res.data.data
                 }else{
                     history_msg.list = []
@@ -165,76 +171,8 @@
 
 
 
-    // TODO 消息
-    const to = ref("")
-    const isgroup = ref(false)
+    // 发送消息逻辑
     const message = ref("")
-    var socket = null;
-    
-
-    function checkSocket(){
-        if(typeof(WebSocket) == 'undefined'){
-        console.log('您的浏览器不支持 web Socket')
-
-        }else{
-            console.log('您的浏览器支持 web Socket')
-            if(socket != null){
-                socket.close();
-                socket = null;
-            }
-        }
-    }
-
-    function connection(url){
-        checkSocket();
-        socket = new WebSocket(url);
-        socket.onopen = () =>{console.log('WebSocket 已连接')}
-        socket.onmessage = (msg) =>{
-           
-            // analysisMessage(msg.data)
-            // 好友消息
-            if(!msg.data.users){
-                console.log('发来的消息：', msg.data)
-                showMsg(msg.data)
-            }else{  // 在线列表
-                console.log(msg.data)
-            }
-        }
-    }
-
-    function showMsg(msg){
-        if(msg.from == undefined)
-            msg = JSON.parse(msg)
-        let s = {
-            user_id: msg.from,
-            name: msg.name,
-            avatar: msg.from_avatar,
-            content: msg.content,
-            isMe: msg.from == user.userid,
-            time: msg.time
-        }
-        
-        history_msg.list.push(s)
-    }
-
-    function close(){
-        if(socket != null){
-            socket.close();
-            socket = null;
-            console.log("链接已关闭")
-        }else {
-            console.log("未开启链接")
-        }
-    }
-
-    function sendMessage(msg){
-        if(socket == null){
-            console.log("WebSocket 链接未开启")
-            return;
-        }
-        socket.send(JSON.stringify(msg));
-    }
-
     function send(){
         
         let sendMsg = {
@@ -250,14 +188,25 @@
         message.value = "";
         sendMessage(sendMsg)
         showMsg(sendMsg)
-        // console.log(myscroll)
-
-        // nextTick(() => {
-        //     myscroll.value.setScrollTop(history_msg.list.length * 50 +360)
-
-        // })
 
    }
+
+   function showMsg(msg){
+        console.log('msg==>', msg)
+        if(msg.from == undefined)
+            msg = JSON.parse(msg)
+        let s = {
+            user_id: msg.from,
+            name: msg.name,
+            avatar: msg.from_avatar,
+            content: msg.content,
+            isMe: msg.from == user.userid,
+            time: msg.time
+        }
+        
+        history_msg.list.push(s)
+    }
+
 
     // TODO 搜索框输入事件
     const search = ref("")
@@ -268,16 +217,7 @@
         
     }
 
-    // 获取好右列表
-     function getFriends(){
-        return axios.get('http://localhost:8080/relation/friends/'+ user.userid)
-     }
-    // 获取群聊列表
-    function getGroups(){
-        return axios.get('http://localhost:8080/relation/group/'+ user.userid)
-    }
-     
-    // 获取初始数据，好友列表，群聊列表
+    // 页面挂载时的逻辑
     onMounted(
        () =>{
 
@@ -288,15 +228,24 @@
                 return;
                 
             }else{
-                connection('ws://localhost:8080/chatserver/'+ user.userid)
+                // 创建连接， 并接受发来的消息
+                const m = connection('ws://localhost:8080/chatserver/'+ user.userid)
+                
+                if(m != null && !m.data.users){
+                    // 收到其他人发来地消息，展示
+                    console.log('发来的消息：', m.data)
+                    showMsg(m.data)
+                }else if(m != null){  // 收到系统发来的消息，在线列表
+                    console.log(m.data)
+                }
             }
            
 
             
-
+            // 获取自己地好友与群数据
             const friends = reactive({res:''})
             const groups = reactive({res: ''})
-            Promise.all([getFriends(), getGroups()])
+            Promise.all([getFriends(user.userid), getGroups(user.userid)])
             .then(function(results){
                 friends.res = results[0].data;
                 groups.res = results[1].data;
@@ -327,6 +276,7 @@
                         newGroups.list.push(obj)
                     })
                 }else{
+                    console.log(friends.res.data)
                     console.log('进入失败')
                 }
                 store.state.friends = newFriends.list

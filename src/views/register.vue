@@ -35,6 +35,7 @@
     import {Avatar,User, Lock} from '@element-plus/icons-vue'
     import {ElMessage} from 'element-plus'
     import axios from 'axios'
+    import {register} from '../axios/api'
     export default{
         mounted(){
             console.log(this.$route.params.d)
@@ -111,27 +112,28 @@
         },
         methods:{
             submitForm(formName){
-                axios.post('http://localhost:8080/user/register', {
-                            userid: this.$data.ruleForm.account,
-                            password: this.$data.ruleForm.pass,
-                            username: this.$data.ruleForm.username,
-                            sex: 1,
-                            avatar: '/default/default.jpg'
+                const data = {
+                    userid: this.$data.ruleForm.account,
+                    password: this.$data.ruleForm.pass,
+                    username: this.$data.ruleForm.username,
+                    sex: 1,
+                    avatar: '/default/default.jpg'
+                }
+                register(data)
+                .then(function(response){
+                    if(response.data.code == '200'){
+                        ElMessage({
+                            message: response.data.msg,
+                            type: 'success',
                         })
-                        .then(function(response){
-                            if(response.data.code == '200'){
-                                ElMessage({
-                                    message: response.data.msg,
-                                    type: 'success',
-                                })
-                                // this.$refs[formName].resetFields();
-                            }else{
-                                ElMessage.error(response.data.msg)
-                            }
-                        })
-                        .catch(function (error) {
-                            console.log(error);
-                        });
+                        // this.$refs[formName].resetFields();
+                    }else{
+                        ElMessage.error(response.data.msg)
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
             }
         }
     }
